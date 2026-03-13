@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Game - Hidrolisis Garam</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="assets/css/style.css">
+  
+  <style>
+    /* Game Layout */
+    .game-wrapper {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .game-board {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 2rem;
+      margin-top: 2rem;
+    }
+
+    @media (max-width: 800px) {
+      .game-board { grid-template-columns: 1fr; }
+    }
+
+    /* Main Play Area */
+    .play-area {
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .play-area::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 4px;
+      background: linear-gradient(90deg, var(--accent), #00ff88);
+    }
+
+    /* Target Display */
+    .target-display {
+      background: rgba(0,0,0,0.3);
+      padding: 1.5rem 3rem;
+      border-radius: var(--radius-sm);
+      text-align: center;
+      margin-bottom: 2rem;
+      border: 1px solid var(--border);
+    }
+
+    .target-label { font-size: 0.9rem; color: var(--fg-secondary); text-transform: uppercase; letter-spacing: 0.1em; }
+    .target-value { 
+      font-family: var(--font-display); 
+      font-size: 3.5rem; 
+      font-weight: 700; 
+      color: #fbbf24; 
+      text-shadow: 0 0 20px rgba(251, 191, 36, 0.3);
+      line-height: 1;
+    }
+
+    /* Beaker in Game */
+    .game-beaker {
+      position: relative;
+      width: 160px;
+      height: 240px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 3px solid rgba(255, 255, 255, 0.15);
+      border-top: none;
+      border-radius: 0 0 20px 20px;
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    .game-liquid {
+      position: absolute;
+      bottom: 0; left: 0;
+      width: 100%; height: 0%;
+      transition: height 0.5s ease, background 0.3s ease;
+    }
+
+    .result-ph {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--fg-primary);
+      background: rgba(255,255,255,0.05);
+      padding: 0.5rem 1.5rem;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+    }
+
+    /* Control Panel Side */
+    .control-side {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .stat-card {
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      text-align: center;
+    }
+
+    .stat-card h4 { font-size: 0.9rem; color: var(--fg-secondary); margin-bottom: 0.5rem; }
+    .stat-val { font-family: var(--font-display); font-size: 1.8rem; font-weight: 700; color: var(--fg-primary); }
+
+    .controls-box {
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+    }
+
+    .control-group { margin-bottom: 1.5rem; }
+    .control-group:last-child { margin-bottom: 0; }
+    .control-label { display: block; font-size: 0.85rem; color: var(--fg-secondary); margin-bottom: 0.5rem; }
+
+    select.game-select {
+      width: 100%; padding: 0.75rem; background: rgba(0,0,0,0.3); border: 1px solid var(--border);
+      color: var(--fg-primary); border-radius: 8px; font-family: inherit; cursor: pointer;
+    }
+    
+    select.game-select option { background: #111; color: #fff; }
+    select.game-select optgroup { color: #aaa; font-weight: bold; }
+
+    input.game-slider {
+      width: 100%; accent-color: var(--accent);
+    }
+
+    /* Feedback Overlay */
+    .feedback-overlay {
+      position: absolute; inset: 0; background: rgba(0,0,0,0.85);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      z-index: 10; opacity: 0; pointer-events: none; transition: opacity 0.3s;
+    }
+    .feedback-overlay.show { opacity: 1; pointer-events: all; }
+    
+    .msg-box {
+      text-align: center; transform: scale(0.8); transition: transform 0.3s;
+    }
+    .feedback-overlay.show .msg-box { transform: scale(1); }
+    
+    .msg-icon { font-size: 4rem; margin-bottom: 1rem; }
+    .msg-title { font-family: var(--font-display); font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .msg-sub { color: var(--fg-secondary); margin-bottom: 1.5rem; }
+
+    /* Screens */
+    .screen-overlay {
+      position: fixed; inset: 0; background: rgba(5, 8, 13, 0.95);
+      display: flex; align-items: center; justify-content: center; z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+    .screen-content { text-align: center; max-width: 500px; padding: 2rem; }
+
+  </style>
+</head>
+<body>
+
+<!-- Background Layers -->
+<div class="bg-grid"></div>
+<div class="bg-gradient"></div>
+<div class="noise-overlay"></div>
+<canvas id="moleculeCanvas"></canvas>
+
+<!-- Header -->
+<header class="header" id="header">
+  <div class="logo">Lab<span>Virtual</span></div>
+  <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+    <span></span><span></span><span></span>
+  </button>
+  <nav id="nav">
+    <a href="index.html">Beranda</a>
+    <a href="stimulus.html">Stimulus</a>
+    <a href="materi.html">Materi</a>
+    <a href="simulasi.html">Simulasi</a>
+    <a href="latihan.html">Latihan</a>
+    <a href="game.html" class="active">Game</a>
+    <a href="evaluasi.html">Evaluasi</a>
+  </nav>
+</header>
+
+<main class="container game-wrapper">
+
+  <!-- Intro Screen -->
+  <div class="screen-overlay" id="introScreen">
+    <div class="screen-content reveal">
+      <span class="tag">Game Interaktif</span>
+      <h1>pH Challenge</h1>
+      <p style="margin: 1rem auto 2rem; color: var(--fg-secondary); max-width: 400px;">
+        Jadilah ahli kimia! Ciptakan larutan garam dengan pH yang tepat sesuai target. 
+        Pilih dari 20 jenis garam dan atur konsentrasinya.
+      </p>
+      <button class="btn-primary" onclick="startGame()">
+        Mulai Game
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left:8px"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Game Over Screen -->
+  <div class="screen-overlay" id="gameOverScreen" style="display: none;">
+    <div class="screen-content">
+      <h1 style="font-size: 3rem; margin-bottom: 0.5rem;">Game Selesai</h1>
+      <p style="font-size: 1.2rem; color: var(--fg-secondary); margin-bottom: 2rem;">Skor Akhir Anda:</p>
+      <div style="font-family: var(--font-display); font-size: 5rem; color: var(--accent); font-weight: 700;" id="finalScoreDisplay">0</div>
+      <button class="btn-primary" onclick="location.reload()" style="margin-top: 2rem;">Main Lagi</button>
+    </div>
+  </div>
+
+  <!-- Main Game Area -->
+  <section class="game-board">
+    <!-- Play Area -->
+    <div class="play-area">
+      <div class="target-display">
+        <div class="target-label">Target pH</div>
+        <div class="target-value" id="targetPhDisplay">9.00</div>
+      </div>
+
+      <div class="game-beaker">
+        <div class="game-liquid" id="gameLiquid"></div>
+        <canvas id="gameCanvas" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none;"></canvas>
+      </div>
+
+      <div class="result-ph">pH: <span id="currentPhDisplay">7.00</span></div>
+
+      <!-- Feedback Popup -->
+      <div class="feedback-overlay" id="feedbackPopup">
+        <div class="msg-box">
+          <div class="msg-icon" id="msgIcon">🎉</div>
+          <div class="msg-title" id="msgTitle">Tepat!</div>
+          <div class="msg-sub" id="msgSub">Larutan Anda sesuai target.</div>
+          <button class="btn-primary" onclick="nextLevel()">Level Selanjutnya</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Control Side -->
+    <div class="control-side">
+      <div class="stat-card">
+        <h4>Level</h4>
+        <div class="stat-val"><span id="levelDisplay">1</span>/10</div>
+      </div>
+      
+      <div class="stat-card">
+        <h4>Skor</h4>
+        <div class="stat-val" id="scoreDisplay">0</div>
+      </div>
+
+      <div class="controls-box">
+        <div class="control-group">
+          <label class="control-label">Pilih Garam (20 Jenis)</label>
+          <select id="saltSelect" class="game-select">
+            <optgroup label="Netral (Asam Kuat, Basa Kuat)">
+              <option value="nacl">NaCl (Garam Dapur)</option>
+              <option value="kcl">KCl (Potassium Klorida)</option>
+              <option value="nano3">NaNO₃ (Natrium Nitrat)</option>
+              <option value="kno3">KNO₃ (Kalium Nitrat)</option>
+              <option value="cacl2">CaCl₂ (Kalsium Klorida)</option>
+              <option value="na2so4">Na₂SO₄ (Natrium Sulfat)</option>
+            </optgroup>
+            <optgroup label="Basa (Asam Lemah, Basa Kuat)">
+              <option value="ch3coona">CH₃COONa (Natrium Asetat)</option>
+              <option value="na2co3">Na₂CO₃ (Soda Abu)</option>
+              <option value="nahco3">NaHCO₃ (Soda Kue)</option>
+              <option value="nacn">NaCN (Natrium Sianida)</option>
+              <option value="naf">NaF (Natrium Fluorida)</option>
+              <option value="k2co3">K₂CO₃ (Potassium Karbonat)</option>
+              <option value="na2so3">Na₂SO₃ (Natrium Sulfit)</option>
+            </optgroup>
+            <optgroup label="Asam (Asam Kuat, Basa Lemah)">
+              <option value="nh4cl">NH₄Cl (Amonium Klorida)</option>
+              <option value="nh4no3">NH₄NO₃ (Amonium Nitrat)</option>
+              <option value="alcl3">AlCl₃ (Aluminium Klorida)</option>
+              <option value="cuso4">CuSO₄ (Tembaga Sulfat)</option>
+              <option value="fecl3">FeCl₃ (Besi(III) Klorida)</option>
+              <option value="zncl2">ZnCl₂ (Seng Klorida)</option>
+              <option value="agno3">AgNO₃ (Perak Nitrat)</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label class="control-label">Konsentrasi: <span id="concDisplay">0.10</span> M</label>
+          <input type="range" class="game-slider" id="concSlider" min="0.01" max="1.0" step="0.01" value="0.1">
+        </div>
+
+        <button class="btn-primary" style="width: 100%; margin-top: 0.5rem;" onclick="checkAnswer()">
+          Cek Jawaban
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Navigation -->
+  <section class="nav-buttons reveal" style="margin-top: 3rem;">
+    <a href="latihan.html" class="btn-secondary">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Kembali ke Latihan
+    </a>
+    <a href="evaluasi.html" class="btn-primary">
+      Lanjut ke Evaluasi
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </a>
+  </section>
+
+</main>
+
+<footer class="footer">2026 Media Pembelajaran Kimia SMA Kelas XI</footer>
+
+<script src="assets/js/main.js"></script>
+
+<script>
+/**
+ * pH CHALLENGE GAME LOGIC - EXPANDED
+ */
+(function() {
+  // Constants
+  const Kw = 1e-14;
+
+  // Database Garam (Konstanta Hidrolisis)
+  // Ka untuk basa lemah, Kb untuk asam lemah
+  // Jika basa, Ka digunakan untuk menghitung Kb garam = Kw/Ka
+  // Jika asam, Kb digunakan untuk menghitung Ka garam = Kw/Kb
+  const SALTS_DB = {
+    // Netral
+    'nacl': { type: 'neutral', name: 'NaCl' },
+    'kcl': { type: 'neutral', name: 'KCl' },
+    'nano3': { type: 'neutral', name: 'NaNO₃' },
+    'kno3': { type: 'neutral', name: 'KNO₃' },
+    'cacl2': { type: 'neutral', name: 'CaCl₂' }, // Asumsi netral (Ca dari basa kuat)
+    'na2so4': { type: 'neutral', name: 'Na₂SO₄' }, // Asumsi netral (H2SO4 asam kuat)
+
+    // Basa (Garam dari Asam Lemah)
+    // CH3COOH Ka = 1.8e-5
+    'ch3coona': { type: 'base', Kb: Kw / 1.8e-5, name: 'CH₃COONa' },
+    // H2CO3 Ka1 = 4.3e-7. Untuk CO3^2-, Kb1 = Kw/Ka2 (Ka2 = 5.6e-11) -> Kb sangat besar (kuat)
+    'na2co3': { type: 'base', Kb: Kw / 5.6e-11, name: 'Na₂CO₃' },
+    // HCO3- amfiter, Kb = Kw/Ka1 = 10^-14 / 4.3e-7 = 2.3e-8
+    'nahco3': { type: 'base', Kb: Kw / 4.3e-7, name: 'NaHCO₃' },
+    // HCN Ka = 6.2e-10 -> Kb = Kw/Ka = 1.6e-5
+    'nacn': { type: 'base', Kb: Kw / 6.2e-10, name: 'NaCN' },
+    // HF Ka = 6.6e-4 -> Kb = Kw/Ka
+    'naf': { type: 'base', Kb: Kw / 6.6e-4, name: 'NaF' },
+    // Sama dengan Na2CO3
+    'k2co3': { type: 'base', Kb: Kw / 5.6e-11, name: 'K₂CO₃' },
+    // H2SO3 Ka1 = 1.5e-2, Ka2 = 6.3e-8. SO3^2- pakai Ka2.
+    'na2so3': { type: 'base', Kb: Kw / 6.3e-8, name: 'Na₂SO₃' },
+
+    // Asam (Garam dari Basa Lemah)
+    // NH3 Kb = 1.8e-5 -> Ka = Kw/Kb
+    'nh4cl': { type: 'acid', Ka: Kw / 1.8e-5, name: 'NH₄Cl' },
+    'nh4no3': { type: 'acid', Ka: Kw / 1.8e-5, name: 'NH₄NO₃' },
+    // Logam transisi (Hydrated ions bersifat asam). Approx Ka agar masuk akal.
+    'alcl3': { type: 'acid', Ka: 1.4e-5, name: 'AlCl₃' }, // Approx Ka Al3+
+    'cuso4': { type: 'acid', Ka: 1.0e-8, name: 'CuSO₄' }, // Approx Ka Cu2+ (asam lemah)
+    'fecl3': { type: 'acid', Ka: 4.0e-3, name: 'FeCl₃' }, // Approx Ka Fe3+ (asam kuat)
+    'zncl2': { type: 'acid', Ka: 2.5e-10, name: 'ZnCl₂' }, // Approx Ka Zn2+
+    // AgOH basa sangat lemah -> Garam sangat asam? Ag+ hydrolysis Ka approx.
+    'agno3': { type: 'acid', Ka: 5.0e-5, name: 'AgNO₃' } 
+  };
+
+  // State
+  let currentLevel = 1;
+  let score = 0;
+  let targetPh = 7.0;
+  let isPlaying = false;
+  let particles = [];
+  let animFrame;
+
+  // DOM
+  const introScreen = document.getElementById('introScreen');
+  const gameOverScreen = document.getElementById('gameOverScreen');
+  const targetPhDisplay = document.getElementById('targetPhDisplay');
+  const currentPhDisplay = document.getElementById('currentPhDisplay');
+  const levelDisplay = document.getElementById('levelDisplay');
+  const scoreDisplay = document.getElementById('scoreDisplay');
+  const saltSelect = document.getElementById('saltSelect');
+  const concSlider = document.getElementById('concSlider');
+  const concDisplay = document.getElementById('concDisplay');
+  const gameLiquid = document.getElementById('gameLiquid');
+  const feedbackPopup = document.getElementById('feedbackPopup');
+  
+  // Canvas
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+  const beakerEl = document.querySelector('.game-beaker');
+
+  function resizeCanvas() {
+    canvas.width = beakerEl.offsetWidth;
+    canvas.height = beakerEl.offsetHeight;
+  }
+
+  // --- Levels ---
+  const levels = [
+    { target: 7.0, tolerance: 0.3 },      // Level 1
+    { target: 5.0, tolerance: 0.6 },      // Level 2
+    { target: 9.0, tolerance: 0.6 },      // Level 3
+    { target: 4.5, tolerance: 0.5 },      // Level 4
+    { target: 8.5, tolerance: 0.5 },      // Level 5
+    { target: 11.0, tolerance: 0.5 },     // Level 6 (Butuh Basa Kuat)
+    { target: 5.3, tolerance: 0.4 },      // Level 7
+    { target: 9.5, tolerance: 0.4 },      // Level 8
+    { target: 7.0, tolerance: 0.1 },      // Level 9 (Presisi)
+    { target: 4.2, tolerance: 0.3 }       // Level 10 (Presisi Asam)
+  ];
+
+  // --- Core Logic ---
+
+  window.startGame = function() {
+    introScreen.style.display = 'none';
+    isPlaying = true;
+    currentLevel = 1;
+    score = 0;
+    updateUI();
+    loadLevel();
+    resizeCanvas();
+    animateParticles();
+  };
+
+  function loadLevel() {
+    if (currentLevel > 10) {
+      endGame();
+      return;
+    }
+
+    const levelData = levels[currentLevel - 1];
+    targetPh = levelData.target;
+    
+    // Reset inputs
+    saltSelect.value = 'nacl';
+    concSlider.value = 0.1;
+    concDisplay.textContent = '0.10';
+    
+    // Reset Visual
+    gameLiquid.style.height = '0%';
+    gameLiquid.className = 'game-liquid';
+    currentPhDisplay.textContent = '7.00';
+    feedbackPopup.classList.remove('show');
+    
+    targetPhDisplay.textContent = targetPh.toFixed(2);
+    levelDisplay.textContent = currentLevel;
+  }
+
+  window.nextLevel = function() {
+    currentLevel++;
+    loadLevel();
+  };
+
+  function endGame() {
+    isPlaying = false;
+    document.getElementById('finalScoreDisplay').textContent = score;
+    gameOverScreen.style.display = 'flex';
+    
+    try {
+      let p = JSON.parse(localStorage.getItem('hidrolisis_progress'));
+      if(p) { p.game = true; localStorage.setItem('hidrolisis_progress', JSON.stringify(p)); }
+    } catch(e) {}
+  }
+
+  function calculatePh(saltKey, conc) {
+    const salt = SALTS_DB[saltKey];
+    if (!salt) return 7.0;
+
+    if (salt.type === 'neutral') {
+      return 7.0;
+    }
+
+    // Avoid log10(0) issues, ensure conc is float
+    const c = Math.max(parseFloat(conc), 1e-6);
+
+    if (salt.type === 'acid') {
+      // [H+] = sqrt(Ka * C)
+      const hPlus = Math.sqrt(salt.Ka * c);
+      return -Math.log10(hPlus);
+    } 
+    
+    if (salt.type === 'base') {
+      // [OH-] = sqrt(Kb * C)
+      const ohMinus = Math.sqrt(salt.Kb * c);
+      const pOH = -Math.log10(ohMinus);
+      return 14 - pOH;
+    }
+    
+    return 7.0;
+  }
+
+  window.checkAnswer = function() {
+    if (!isPlaying) return;
+
+    const saltKey = saltSelect.value;
+    const conc = parseFloat(concSlider.value);
+    const resultPh = calculatePh(saltKey, conc);
+    
+    // Update Visuals
+    currentPhDisplay.textContent = resultPh.toFixed(2);
+    gameLiquid.style.height = '70%';
+    
+    // Set Color
+    gameLiquid.classList.remove('acid', 'base', 'neutral');
+    if (resultPh < 6.5) gameLiquid.classList.add('acid');
+    else if (resultPh > 7.5) gameLiquid.classList.add('base');
+    else gameLiquid.classList.add('neutral');
+
+    // Check Match
+    const levelData = levels[currentLevel - 1];
+    const diff = Math.abs(resultPh - targetPh);
+
+    if (diff <= levelData.tolerance) {
+      const points = Math.round(100 * (1 - diff / levelData.tolerance));
+      score += points;
+      scoreDisplay.textContent = score;
+      
+      document.getElementById('msgIcon').textContent = '🎉';
+      document.getElementById('msgTitle').textContent = 'Tepat Sasaran!';
+      document.getElementById('msgSub').textContent = `Kamu mendapat ${points} poin.`;
+      feedbackPopup.classList.add('show');
+    } else {
+      document.getElementById('msgIcon').textContent = '😅';
+      document.getElementById('msgTitle').textContent = 'Belum Tepat';
+      document.getElementById('msgSub').textContent = `pH ${resultPh.toFixed(1)} terlalu jauh dari target.`;
+      feedbackPopup.classList.add('show');
+    }
+  };
+
+  function updateUI() {
+    scoreDisplay.textContent = score;
+  }
+
+  concSlider.addEventListener('input', (e) => {
+    concDisplay.textContent = parseFloat(e.target.value).toFixed(2);
+  });
+
+  // --- Particles Animation ---
+  class Particle {
+    constructor() { this.reset(); }
+    reset() {
+      this.x = Math.random() * canvas.width;
+      this.y = canvas.height + 10;
+      this.vy = -Math.random() * 1 - 0.5;
+      this.size = Math.random() * 3 + 1;
+      this.color = 'rgba(255, 255, 255, 0.3)';
+    }
+    update() {
+      this.y += this.vy;
+      if (this.y < 0) this.reset();
+    }
+    draw() {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+      ctx.fillStyle = this.color;
+      ctx.fill();
+    }
+  }
+
+  function animateParticles() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (particles.length < 20 && gameLiquid.style.height !== '0%') particles.push(new Particle());
+    particles.forEach(p => { p.update(); p.draw(); });
+    requestAnimationFrame(animateParticles);
+  }
+
+  window.addEventListener('resize', resizeCanvas);
+
+})();
+</script>
+
+</body>
+</html>

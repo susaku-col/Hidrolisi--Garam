@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulasi - Hidrolisis Garam</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="assets/css/style.css">
+  
+  <style>
+    /* Layout Simulation Page */
+    .simulation-container {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      gap: 2rem;
+      margin-top: 2rem;
+    }
+
+    @media (max-width: 900px) {
+      .simulation-container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Control Panel */
+    .control-panel {
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      height: fit-content;
+      position: sticky;
+      top: 100px;
+    }
+
+    .panel-title {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .control-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .control-label {
+      display: block;
+      font-size: 0.9rem;
+      color: var(--fg-secondary);
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+    }
+
+    select.form-input {
+      width: 100%;
+      padding: 0.75rem;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--border);
+      color: var(--fg-primary);
+      border-radius: 8px;
+      font-family: inherit;
+      cursor: pointer;
+    }
+
+    select.form-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .slider-group {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    input[type="range"] {
+      flex: 1;
+      accent-color: var(--accent);
+    }
+
+    .slider-value {
+      background: var(--accent-dim);
+      color: var(--accent);
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      min-width: 60px;
+      text-align: center;
+    }
+
+    /* Lab Workspace */
+    .lab-workspace {
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .lab-header {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      background: rgba(0,0,0,0.2);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .lab-header h3 {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+    }
+
+    .lab-body {
+      padding: 2rem;
+      flex: 1;
+      display: flex;
+      gap: 2rem;
+      align-items: flex-start;
+    }
+
+    @media (max-width: 768px) {
+      .lab-body { flex-direction: column; align-items: center; }
+    }
+
+    /* Beaker Styles */
+    .beaker-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .beaker-sim {
+      position: relative;
+      width: 180px;
+      height: 260px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 4px solid rgba(255, 255, 255, 0.15);
+      border-top: none;
+      border-radius: 0 0 30px 30px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    .liquid-sim {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 0%;
+      transition: height 1s ease, background 0.5s ease, filter 0.5s ease;
+      filter: brightness(1);
+    }
+
+    .liquid-sim.filled { height: 70%; }
+    .liquid-sim.acid { background: linear-gradient(to top, #dc2626, #ef4444); filter: brightness(0.8); }
+    .liquid-sim.base { background: linear-gradient(to top, #2563eb, #3b82f6); filter: brightness(0.9); }
+    .liquid-sim.neutral { background: linear-gradient(to top, #525252, #a3a3a3); filter: brightness(0.7); }
+
+    #simCanvas {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    /* Result Display */
+    .result-display {
+      flex: 1;
+      background: rgba(0,0,0,0.2);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      border: 1px solid var(--border);
+    }
+
+    .result-item {
+      margin-bottom: 1.5rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .result-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+
+    .result-label { font-size: 0.9rem; color: var(--fg-secondary); margin-bottom: 0.5rem; }
+    .result-value { font-family: var(--font-display); font-size: 2rem; font-weight: 700; }
+    .result-value.accent { color: var(--accent); }
+    
+    .eq-box {
+      background: rgba(255,255,255,0.03);
+      padding: 1rem;
+      border-radius: 8px;
+      border-left: 4px solid var(--accent);
+      margin-top: 1rem;
+      font-family: 'Courier New', monospace;
+    }
+
+    /* Placeholder State */
+    .placeholder-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 300px;
+      color: var(--fg-secondary);
+      text-align: center;
+    }
+    .placeholder-state svg { margin-bottom: 1rem; opacity: 0.5; }
+
+  </style>
+</head>
+<body>
+
+<!-- Background Layers -->
+<div class="bg-grid"></div>
+<div class="bg-gradient"></div>
+<div class="noise-overlay"></div>
+<canvas id="moleculeCanvas"></canvas>
+
+<!-- Header -->
+<header class="header" id="header">
+  <div class="logo">Lab<span>Virtual</span></div>
+  <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+    <span></span><span></span><span></span>
+  </button>
+  <nav id="nav">
+    <a href="index.html">Beranda</a>
+    <a href="stimulus.html">Stimulus</a>
+    <a href="materi.html">Materi</a>
+    <a href="simulasi.html" class="active">Simulasi</a>
+    <a href="latihan.html">Latihan</a>
+    <a href="game.html">Game</a>
+    <a href="evaluasi.html">Evaluasi</a>
+  </nav>
+</header>
+
+<main class="container">
+  
+  <section class="sim-hero reveal" style="text-align: center; margin-bottom: 2rem;">
+    <span class="tag">Laboratorium Virtual</span>
+    <h1>Simulasi Hidrolisis Garam</h1>
+    <p style="max-width: 600px; margin: 0 auto;">Larutkan garam, amati reaksi ion, dan hitung pH larutan secara real-time.</p>
+  </section>
+
+  <div class="simulation-container reveal">
+    
+    <!-- Control Panel -->
+    <aside class="control-panel">
+      <h3 class="panel-title">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Panel Kontrol
+      </h3>
+      
+      <div class="control-section">
+        <label class="control-label">Pilih Jenis Garam</label>
+        <select id="saltSelect" class="form-input">
+          <option value="ch3coona">CH₃COONa (Asetat)</option>
+          <option value="nh4cl">NH₄Cl (Amonium Klorida)</option>
+          <option value="nacl">NaCl (Natrium Klorida)</option>
+        </select>
+      </div>
+
+      <div class="control-section">
+        <label class="control-label">Konsentrasi (M)</label>
+        <div class="slider-group">
+          <input type="range" id="concSlider" min="0.01" max="1" step="0.01" value="0.1">
+          <span class="slider-value" id="concVal">0.10 M</span>
+        </div>
+      </div>
+
+      <button class="btn-primary" id="startBtn" style="width: 100%; margin-top: 1rem;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Mulai Simulasi
+      </button>
+    </aside>
+
+    <!-- Lab Workspace -->
+    <div class="lab-workspace">
+      <div class="lab-header">
+        <h3>Area Kerja</h3>
+        <span id="statusText" style="color: var(--fg-secondary); font-size: 0.9rem;">Siap</span>
+      </div>
+      
+      <div class="lab-body">
+        <!-- Beaker Visual -->
+        <div class="beaker-wrapper">
+          <div class="beaker-sim" id="beakerSim">
+            <div class="liquid-sim" id="liquidSim"></div>
+            <canvas id="simCanvas"></canvas>
+          </div>
+          <div style="font-family: var(--font-display); font-weight: 600; color: var(--fg-secondary);">
+            <span id="saltNameDisplay">-</span>
+          </div>
+        </div>
+
+        <!-- Result Display -->
+        <div class="result-display" id="resultArea">
+          <div class="placeholder-state" id="placeholderRes">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <p>Pilih parameter dan klik "Mulai Simulasi"</p>
+          </div>
+
+          <div id="actualResult" style="display: none;">
+            <div class="result-item">
+              <div class="result-label">Nilai pH Larutan</div>
+              <div class="result-value accent" id="phResult">7.00</div>
+            </div>
+            
+            <div class="result-item">
+              <div class="result-label">Sifat Larutan</div>
+              <div class="result-value" id="natureResult" style="font-size: 1.2rem;">Netral</div>
+            </div>
+
+            <div class="result-item">
+              <div class="result-label">Reaksi Hidrolisis</div>
+              <div class="eq-box" id="eqBox">
+                <code id="eqText">-</code>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Navigation -->
+  <section class="nav-buttons reveal">
+    <a href="materi.html" class="btn-secondary">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Kembali ke Materi
+    </a>
+    <a href="latihan.html" class="btn-primary">
+      Lanjut ke Latihan
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </a>
+  </section>
+
+</main>
+
+<footer class="footer">
+  2026 Media Pembelajaran Kimia SMA Kelas XI
+</footer>
+
+<script src="assets/js/main.js"></script>
+
+<script>
+(function() {
+  'use strict';
+
+  // --- DOM Elements ---
+  const concSlider = document.getElementById('concSlider');
+  const concVal = document.getElementById('concVal');
+  const startBtn = document.getElementById('startBtn');
+  const saltSelect = document.getElementById('saltSelect');
+  const liquidSim = document.getElementById('liquidSim');
+  const beakerSim = document.getElementById('beakerSim');
+  const simCanvas = document.getElementById('simCanvas');
+  const ctx = simCanvas.getContext('2d');
+
+  // Result Elements
+  const placeholderRes = document.getElementById('placeholderRes');
+  const actualResult = document.getElementById('actualResult');
+  const phResultEl = document.getElementById('phResult');
+  const natureResultEl = document.getElementById('natureResult');
+  const saltNameDisplay = document.getElementById('saltNameDisplay');
+  const eqText = document.getElementById('eqText');
+  const statusText = document.getElementById('statusText');
+
+  // --- State ---
+  let particles = [];
+  let currentType = 'neutral';
+  let animationId = null;
+
+  // --- Constants ---
+  const Kw = 1e-14;
+  const Ka_CH3COOH = 1.8e-5; // Ka asam asetat
+  const Kb_NH3 = 1.8e-5;     // Kb amonia
+
+  // --- Logic Functions ---
+
+  function calculatepH(type, c) {
+    let pH = 7;
+    if (type === 'ch3coona') {
+      // CH3COO- + H2O <=> CH3COOH + OH-
+      // Kb = Kw / Ka
+      const Kb = Kw / Ka_CH3COOH;
+      const OH = Math.sqrt(Kb * c);
+      const pOH = -Math.log10(OH);
+      pH = 14 - pOH;
+    } else if (type === 'nh4cl') {
+      // NH4+ + H2O <=> NH3 + H3O+
+      // Ka = Kw / Kb
+      const Ka = Kw / Kb_NH3;
+      const H = Math.sqrt(Ka * c);
+      pH = -Math.log10(H);
+    } else {
+      pH = 7;
+    }
+    return pH;
+  }
+
+  // --- UI Handlers ---
+  concSlider.addEventListener('input', function() {
+    concVal.textContent = parseFloat(this.value).toFixed(2) + ' M';
+  });
+
+  startBtn.addEventListener('click', function() {
+    const type = saltSelect.value;
+    const c = parseFloat(concSlider.value);
+
+    // Reset
+    placeholderRes.style.display = 'none';
+    actualResult.style.display = 'block';
+    
+    // Calculate
+    const pH = calculatepH(type, c);
+    
+    // Update UI
+    runSimulation(type, pH, c);
+  });
+
+  // --- Simulation Engine ---
+
+  function runSimulation(type, pH, c) {
+    // Update Texts
+    statusText.textContent = 'Menganalisis...';
+    phResultEl.textContent = pH.toFixed(2);
+    saltNameDisplay.textContent = saltSelect.options[saltSelect.selectedIndex].text;
+    eqText.innerHTML = getEquation(type);
+
+    // Set Nature & Color
+    liquidSim.classList.remove('acid', 'base', 'neutral', 'filled');
+    
+    if (pH < 7) {
+      natureResultEl.textContent = "Asam";
+      natureResultEl.style.color = "#f87171";
+      liquidSim.classList.add('acid', 'filled');
+    } else if (pH > 7) {
+      natureResultEl.textContent = "Basa";
+      natureResultEl.style.color = "#60a5fa";
+      liquidSim.classList.add('base', 'filled');
+    } else {
+      natureResultEl.textContent = "Netral";
+      natureResultEl.style.color = "#d1d5db";
+      liquidSim.classList.add('neutral', 'filled');
+    }
+
+    // Animation
+    currentType = type;
+    resizeSimCanvas();
+    particles = [];
+    
+    setTimeout(() => { statusText.textContent = 'Simulasi Selesai'; }, 1000);
+  }
+
+  function getEquation(type) {
+    if (type === 'ch3coona') return 'CH₃COO⁻ + H₂O ⇌ CH₃COOH + OH⁻';
+    if (type === 'nh4cl') return 'NH₄⁺ + H₂O ⇌ NH₃ + H₃O⁺';
+    return 'Tidak ada reaksi hidrolisis signifikan';
+  }
+
+  // --- Ion Animation ---
+  
+  function resizeSimCanvas() {
+    simCanvas.width = beakerSim.offsetWidth;
+    simCanvas.height = beakerSim.offsetHeight;
+  }
+
+  class SimParticle {
+    constructor(type) {
+      this.type = type;
+      this.x = Math.random() * simCanvas.width;
+      this.y = simCanvas.height + 10;
+      this.vx = (Math.random() - 0.5) * 1.5;
+      this.vy = -Math.random() * 2 - 1;
+      this.radius = type === 'water' ? 3 : 10;
+      
+      const colors = {
+        water: 'rgba(150, 200, 255, 0.3)',
+        cation: '#fbbf24', // Kuning
+        anion: '#fb923c',  // Oranye
+        H: '#ef4444',      // Merah
+        OH: '#3b82f6'      // Biru
+      };
+      this.color = colors[type] || '#fff';
+      this.label = this.getLabel();
+    }
+
+    getLabel() {
+      if (this.type === 'cation') return '+';
+      if (this.type === 'anion') return '-';
+      if (this.type === 'H') return 'H⁺';
+      if (this.type === 'OH') return 'OH⁻';
+      return '';
+    }
+
+    update() {
+      this.x += this.vx;
+      this.y += this.vy;
+      
+      if (this.x < 0 || this.x > simCanvas.width) this.vx *= -1;
+      
+      // Reset jika keluar layar
+      if (this.y < -20) {
+        if (this.type === 'H' || this.type === 'OH') return false; 
+        this.y = simCanvas.height + 10;
+        this.x = Math.random() * simCanvas.width;
+      }
+      return true;
+    }
+
+    draw() {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+      ctx.fillStyle = this.color;
+      ctx.fill();
+      if (this.label) {
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(this.label, this.x, this.y);
+      }
+    }
+  }
+
+  function spawnSimParticles() {
+    // Limit jumlah partikel
+    if (particles.length < 30) {
+      particles.push(new SimParticle('water'));
+      
+      if (currentType === 'ch3coona') {
+        if (Math.random() > 0.9) particles.push(new SimParticle('cation')); // Na+
+        if (Math.random() > 0.9) particles.push(new SimParticle('anion'));  // CH3COO-
+      } else if (currentType === 'nh4cl') {
+        if (Math.random() > 0.9) particles.push(new SimParticle('cation')); // NH4+
+        if (Math.random() > 0.9) particles.push(new SimParticle('anion'));  // Cl-
+      } else {
+        if (Math.random() > 0.9) particles.push(new SimParticle('cation'));
+        if (Math.random() > 0.9) particles.push(new SimParticle('anion'));
+      }
+    }
+  }
+
+  function checkSimReactions() {
+    if (currentType === 'nacl') return;
+
+    for (let i = 0; i < particles.length; i++) {
+      let p = particles[i];
+      // Cek reaksi jika Anion (untuk Basa) atau Kation (untuk Asam) mendekati Air
+      if ( (p.type === 'anion' || p.type === 'cation') && Math.random() > 0.97) {
+        let waters = particles.filter(w => w.type === 'water');
+        if (waters.length > 0) {
+          let target = waters[Math.floor(Math.random() * waters.length)];
+          let dist = Math.hypot(p.x - target.x, p.y - target.y);
+          
+          if (dist < 40) {
+            let idx = particles.indexOf(target);
+            if (idx > -1) particles.splice(idx, 1);
+
+            // CH3COONa (Anion bereaksi -> OH)
+            if (currentType === 'ch3coona' && p.type === 'anion') {
+              particles.push(new SimParticle('OH'));
+            }
+            // NH4Cl (Kation bereaksi -> H)
+            else if (currentType === 'nh4cl' && p.type === 'cation') {
+              particles.push(new SimParticle('H'));
+            }
+          }
+        }
+      }
+    }
+  }
+
+  function animateSim() {
+    ctx.clearRect(0, 0, simCanvas.width, simCanvas.height);
+    spawnSimParticles();
+    checkSimReactions();
+
+    for (let i = particles.length - 1; i >= 0; i--) {
+      if (!particles[i].update()) particles.splice(i, 1);
+      else particles[i].draw();
+    }
+    requestAnimationFrame(animateSim);
+  }
+
+  // Init
+  window.addEventListener('load', () => {
+    resizeSimCanvas();
+    animateSim();
+  });
+  window.addEventListener('resize', resizeSimCanvas);
+
+})();
+</script>
+
+</body>
+</html>

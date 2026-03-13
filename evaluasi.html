@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Evaluasi - Hidrolisis Garam</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="assets/css/style.css">
+  
+  <style>
+    /* Evaluation Specific Styles */
+    .eval-container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .intro-card {
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 3rem 2rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .intro-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--accent), #00ff88);
+    }
+
+    .rules-list {
+      text-align: left;
+      max-width: 400px;
+      margin: 2rem auto;
+      background: rgba(0,0,0,0.2);
+      padding: 1.5rem;
+      border-radius: var(--radius-sm);
+    }
+
+    .rules-list li {
+      margin-bottom: 0.5rem;
+      padding-left: 1.5rem;
+      position: relative;
+      color: var(--fg-secondary);
+    }
+
+    .rules-list li::before {
+      content: '•';
+      color: var(--accent);
+      position: absolute;
+      left: 0;
+      font-weight: bold;
+    }
+
+    /* Quiz Interface */
+    .quiz-interface {
+      display: none; /* Hidden initially */
+    }
+
+    .quiz-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      padding: 1rem 1.5rem;
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      position: sticky;
+      top: 80px;
+      z-index: 20;
+      backdrop-filter: blur(10px);
+    }
+
+    .timer-box {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--font-display);
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .timer-box.warning {
+      color: #f59e0b;
+      animation: pulse 1s infinite;
+    }
+
+    .timer-box.danger {
+      color: #ef4444;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+
+    .progress-info {
+      font-size: 0.9rem;
+      color: var(--fg-secondary);
+    }
+
+    /* Question Card */
+    .question-card {
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .question-number {
+      font-family: var(--font-display);
+      font-size: 0.9rem;
+      color: var(--accent);
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .question-text {
+      font-size: 1.15rem;
+      font-weight: 500;
+      margin-bottom: 2rem;
+      line-height: 1.6;
+      color: var(--fg-primary);
+    }
+
+    .options-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .option-item {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 1rem 1.25rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .option-item:hover {
+      background: rgba(255,255,255,0.05);
+      border-color: rgba(255,255,255,0.2);
+    }
+
+    .option-item.selected {
+      border-color: var(--accent);
+      background: rgba(0, 229, 176, 0.1);
+    }
+
+    .option-marker {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+
+    .option-item.selected .option-marker {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--bg-primary);
+    }
+
+    /* Navigation Grid */
+    .nav-grid {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 2rem;
+    }
+
+    .question-nav-dots {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .nav-dot {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      color: var(--fg-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .nav-dot.current {
+      border-color: var(--accent);
+      color: var(--accent);
+      font-weight: bold;
+    }
+
+    .nav-dot.answered {
+      background: rgba(0, 229, 176, 0.2);
+      border-color: rgba(0, 229, 176, 0.4);
+      color: var(--fg-primary);
+    }
+
+    /* Result Section */
+    .result-screen {
+      display: none;
+      text-align: center;
+    }
+
+    .score-circle {
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.2);
+      border: 6px solid var(--border);
+      margin: 0 auto 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .score-circle::after {
+      content: '';
+      position: absolute;
+      inset: -6px;
+      border-radius: 50%;
+      border: 6px solid transparent;
+      border-top-color: var(--accent);
+      animation: spin 2s linear infinite;
+    }
+
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+
+    .score-value {
+      font-family: var(--font-display);
+      font-size: 4rem;
+      font-weight: 700;
+      color: var(--fg-primary);
+    }
+
+    .score-label {
+      font-size: 1rem;
+      color: var(--fg-secondary);
+    }
+
+    .feedback-text {
+      font-size: 1.2rem;
+      margin-bottom: 2rem;
+      padding: 1rem;
+      border-radius: var(--radius-sm);
+    }
+
+    .feedback-text.pass { background: rgba(34, 197, 94, 0.1); color: #22c55e; }
+    .feedback-text.fail { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+
+  </style>
+</head>
+<body>
+
+<!-- Background Layers -->
+<div class="bg-grid"></div>
+<div class="bg-gradient"></div>
+<div class="noise-overlay"></div>
+<canvas id="moleculeCanvas"></canvas>
+
+<!-- Header -->
+<header class="header" id="header">
+  <div class="logo">Lab<span>Virtual</span></div>
+  <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+    <span></span><span></span><span></span>
+  </button>
+  <nav id="nav">
+    <a href="index.html">Beranda</a>
+    <a href="stimulus.html">Stimulus</a>
+    <a href="materi.html">Materi</a>
+    <a href="simulasi.html">Simulasi</a>
+    <a href="latihan.html">Latihan</a>
+    <a href="game.html">Game</a>
+    <a href="evaluasi.html" class="active">Evaluasi</a>
+  </nav>
+</header>
+
+<main class="container eval-container">
+
+  <!-- INTRO SCREEN -->
+  <section class="intro-card reveal" id="introScreen">
+    <span class="tag">Evaluasi Akhir</span>
+    <h1>Uji Pemahaman Anda</h1>
+    <p style="margin-top: 1rem; max-width: 600px; margin-left: auto; margin-right: auto;">
+      Jawab pertanyaan berikut untuk mengukur pemahaman konsep hidrolisis garam. Kerjakan dengan tenang dan teliti.
+    </p>
+    
+    <div class="rules-list">
+      <ul>
+        <li>Jumlah soal: <strong>15 Soal</strong> Pilihan Ganda.</li>
+        <li>Waktu pengerjaan: <strong>30 Menit</strong>.</li>
+        <li>Nilai minimal kelulusan: <strong>75</strong>.</li>
+        <li>Jika waktu habis, jawaban akan terkumpul otomatis.</li>
+      </ul>
+    </div>
+
+    <button class="btn-primary" id="startEvalBtn" style="margin-top: 1rem;">
+      Mulai Evaluasi
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left:8px"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+    </button>
+  </section>
+
+  <!-- QUIZ INTERFACE -->
+  <div class="quiz-interface" id="quizInterface">
+    <div class="quiz-header">
+      <div class="progress-info">Soal <span id="currentQNum">1</span>/15</div>
+      <div class="timer-box" id="timerBox">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span id="timerDisplay">30:00</span>
+      </div>
+    </div>
+
+    <div id="questionContainer"></div>
+
+    <div class="nav-grid">
+      <div class="question-nav-dots" id="navDots"></div>
+      <div style="display:flex; gap:1rem;">
+        <button class="btn-secondary" id="prevBtn" style="display:none;">Sebelumnya</button>
+        <button class="btn-primary" id="nextBtn">Selanjutnya</button>
+        <button class="btn-primary" id="submitBtn" style="display:none; background:#22c55e;">Kumpulkan Jawaban</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULT SCREEN -->
+  <div class="result-screen" id="resultScreen">
+    <div class="score-circle">
+      <div class="score-value" id="finalScore">0</div>
+      <div class="score-label">Nilai Anda</div>
+    </div>
+    
+    <h2 style="margin-bottom: 1rem;">Hasil Evaluasi</h2>
+    <p style="color: var(--fg-secondary); margin-bottom: 1rem;">
+      Jawaban Benar: <span id="correctCount">0</span>/15<br>
+      Waktu: <span id="timeTaken">-</span>
+    </p>
+
+    <div class="feedback-text pass" id="feedbackBox">
+      Selamat! Anda lulus evaluasi ini.
+    </div>
+
+    <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 2rem;">
+      <button class="btn-secondary" onclick="location.reload()">Ulangi Evaluasi</button>
+      <a href="index.html" class="btn-primary">Kembali ke Beranda</a>
+    </div>
+  </div>
+
+</main>
+
+<footer class="footer">2026 Media Pembelajaran Kimia SMA Kelas XI</footer>
+
+<script src="assets/js/main.js"></script>
+
+<script>
+(function() {
+  'use strict';
+
+  // --- Question Data ---
+  const questions = [
+    { q: "Hidrolisis garam adalah reaksi...", options: ["Penguraian garam oleh air", "Pembentukan garam dari asam dan basa", "Pengendapan garam dalam air", "Penguapan garam"], answer: 0 },
+    { q: "Garam yang berasal dari asam kuat dan basa lemah akan menghasilkan larutan bersifat...", options: ["Netral", "Asam", "Basa", "Amfoter"], answer: 1 },
+    { q: "Larutan NaCl bersifat netral karena...", options: ["Na+ dan Cl- terhidrolisis parsial", "Na+ dan Cl- terhidrolisis total", "Na+ dan Cl- tidak terhidrolisis", "NaCl tidak larut dalam air"], answer: 2 },
+    { q: "Contoh garam yang menghasilkan larutan basa adalah...", options: ["NH4Cl", "CH3COONa", "AlCl3", "NaCl"], answer: 1 },
+    { q: "Jika larutan garam memiliki pH < 7, maka garam tersebut berasal dari...", options: ["Asam kuat dan basa kuat", "Asam lemah dan basa kuat", "Asam kuat dan basa lemah", "Asam lemah dan basa lemah (Ka < Kb)"], answer: 2 },
+    { q: "Reaksi ion NH4+ dalam air (hidrolisis) yang benar adalah...", options: ["NH4+ + H2O -> NH3 + H3O+", "NH4+ + OH- -> NH3 + H2O", "NH4+ + H2O -> NH4OH + H+", "NH4+ -> NH3 + H+"], answer: 0 },
+    { q: "Sabun mandi (Natrium stearat) dalam air akan terhidrolisis menghasilkan ion...", options: ["H3O+", "OH-", "Na-", "Cl-"], answer: 1 },
+    { q: "Pernyataan yang benar tentang CH3COONa...", options: ["Terhidrolisis sebagian, pH > 7", "Terhidrolisis total, pH < 7", "Tidak terhidrolisis, pH = 7", "Terhidrolisis sebagian, pH < 7"], answer: 0 },
+    { q: "Jika Ka asam asetat = 10^-5 dan konsentrasi CH3COONa 0.1 M, maka pH larutan kira-kira...", options: ["5", "7", "9", "13"], answer: 2 },
+    { q: "Tanah yang diberi pupuk ZA ((NH4)2SO4) cenderung bersifat asam karena...", options: ["Ion SO4^2- bereaksi dengan air", "Ion NH4+ bereaksi dengan air melepaskan H+", "Ion NH4+ bereaksi dengan air melepaskan OH-", "Pupuk ZA mengandung asam sulfat"], answer: 1 },
+    { q: "Pasangan garam yang sama-sama menghasilkan larutan asam adalah...", options: ["NaCl dan CH3COONa", "NH4Cl dan AlCl3", "Na2CO3 dan NaOH", "CH3COONa dan NaCN"], answer: 1 },
+    { q: "Hidrolisis total terjadi pada garam yang berasal dari...", options: ["Asam kuat dan basa kuat", "Asam lemah dan basa kuat", "Asam kuat dan basa lemah", "Asam lemah dan basa lemah yang kekuatannya berbeda jauh"], answer: 3 },
+    { q: "Ion yang terhidrolisis dalam larutan NaNO2 (Ka HNO2 = kecil) adalah...", options: ["Na+", "NO2-", "Keduanya", "Tidak ada"], answer: 1 },
+    { q: "Untuk mengubah larutan garam yang asam menjadi netral, dapat dilakukan dengan cara...", options: ["Menambahkan asam kuat", "Menambahkan basa kuat", "Mengencerkan larutan", "Menambahkan garam lain"], answer: 1 },
+    { q: "Jika Kw air murni adalah 10^-14, maka dalam larutan garam netral konsentrasi [H+] dan [OH-] adalah...", options: ["[H+] > [OH-]", "[H+] < [OH-]", "[H+] = [OH-] = 10^-7 M", "[H+] = [OH-] = 0 M"], answer: 2 }
+  ];
+
+  // --- State ---
+  let currentIndex = 0;
+  let userAnswers = new Array(questions.length).fill(null);
+  let timerInterval;
+  let timeRemaining = 30 * 60; // 30 minutes in seconds
+  let startTime;
+
+  // --- DOM Elements ---
+  const introScreen = document.getElementById('introScreen');
+  const quizInterface = document.getElementById('quizInterface');
+  const resultScreen = document.getElementById('resultScreen');
+  const startBtn = document.getElementById('startEvalBtn');
+  const timerDisplay = document.getElementById('timerDisplay');
+  const timerBox = document.getElementById('timerBox');
+  const questionContainer = document.getElementById('questionContainer');
+  const navDots = document.getElementById('navDots');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const submitBtn = document.getElementById('submitBtn');
+  const currentQNum = document.getElementById('currentQNum');
+
+  // --- Initialization ---
+  startBtn.addEventListener('click', startQuiz);
+  prevBtn.addEventListener('click', () => navigate(-1));
+  nextBtn.addEventListener('click', () => navigate(1));
+  submitBtn.addEventListener('click', showResults);
+
+  function startQuiz() {
+    introScreen.style.display = 'none';
+    quizInterface.style.display = 'block';
+    startTime = new Date();
+    renderQuestion();
+    renderNavDots();
+    startTimer();
+  }
+
+  // --- Timer ---
+  function startTimer() {
+    updateTimerDisplay();
+    timerInterval = setInterval(() => {
+      timeRemaining--;
+      updateTimerDisplay();
+      
+      if (timeRemaining <= 300) { // Last 5 mins
+        timerBox.classList.add('danger');
+      } else if (timeRemaining <= 600) { // Last 10 mins
+        timerBox.classList.add('warning');
+      }
+
+      if (timeRemaining <= 0) {
+        clearInterval(timerInterval);
+        alert('Waktu telah habis! Jawaban akan dikumpulkan otomatis.');
+        showResults();
+      }
+    }, 1000);
+  }
+
+  function updateTimerDisplay() {
+    const minutes = Math.floor(timeRemaining / 60);
+    const seconds = timeRemaining % 60;
+    const formattedSeconds = seconds < 10 ? '0' + seconds : seconds;
+    timerDisplay.textContent = `${minutes}:${formattedSeconds}`;
+  }
+
+  // --- Rendering ---
+  function renderQuestion() {
+    const q = questions[currentIndex];
+    const userAnswer = userAnswers[currentIndex];
+
+    let html = `
+      <div class="question-card">
+        <div class="question-number">Soal Nomor ${currentIndex + 1}</div>
+        <div class="question-text">${q.q}</div>
+        <div class="options-grid">
+          ${q.options.map((opt, i) => `
+            <div class="option-item ${userAnswer === i ? 'selected' : ''}" onclick="selectAnswer(${i})">
+              <div class="option-marker">${String.fromCharCode(65 + i)}</div>
+              <span>${opt}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+    questionContainer.innerHTML = html;
+    currentQNum.textContent = currentIndex + 1;
+
+    // Update Navigation Buttons
+    prevBtn.style.display = currentIndex === 0 ? 'none' : 'inline-flex';
+    
+    if (currentIndex === questions.length - 1) {
+      nextBtn.style.display = 'none';
+      submitBtn.style.display = 'inline-flex';
+    } else {
+      nextBtn.style.display = 'inline-flex';
+      submitBtn.style.display = 'none';
+    }
+
+    updateNavDots();
+  }
+
+  function renderNavDots() {
+    navDots.innerHTML = questions.map((_, i) => 
+      `<div class="nav-dot ${i === currentIndex ? 'current' : ''} ${userAnswers[i] !== null ? 'answered' : ''}" onclick="jumpTo(${i})">${i + 1}</div>`
+    ).join('');
+  }
+
+  function updateNavDots() {
+    const dots = navDots.querySelectorAll('.nav-dot');
+    dots.forEach((dot, i) => {
+      dot.classList.toggle('current', i === currentIndex);
+      dot.classList.toggle('answered', userAnswers[i] !== null);
+    });
+  }
+
+  // --- Logic ---
+  window.selectAnswer = function(index) {
+    userAnswers[currentIndex] = index;
+    renderQuestion(); // Re-render to update UI
+  };
+
+  window.jumpTo = function(index) {
+    currentIndex = index;
+    renderQuestion();
+  };
+
+  function navigate(step) {
+    currentIndex += step;
+    renderQuestion();
+  }
+
+  function showResults() {
+    clearInterval(timerInterval);
+    
+    // Calculate Score
+    let score = 0;
+    userAnswers.forEach((ans, i) => {
+      if (ans === questions[i].answer) score++;
+    });
+
+    const finalScoreVal = Math.round((score / questions.length) * 100);
+    
+    // Calculate Time Taken
+    const endTime = new Date();
+    const timeDiff = Math.round((endTime - startTime) / 1000); // in seconds
+    const mins = Math.floor(timeDiff / 60);
+    const secs = timeDiff % 60;
+
+    // Update UI
+    quizInterface.style.display = 'none';
+    resultScreen.style.display = 'block';
+    
+    document.getElementById('finalScore').textContent = finalScoreVal;
+    document.getElementById('correctCount').textContent = score;
+    document.getElementById('timeTaken').textContent = `${mins} menit ${secs} detik`;
+
+    const feedbackBox = document.getElementById('feedbackBox');
+    if (finalScoreVal >= 75) {
+      feedbackBox.textContent = "Selamat! Anda lulus evaluasi ini. Pemahaman konsep Anda sangat baik.";
+      feedbackBox.className = "feedback-text pass";
+    } else {
+      feedbackBox.textContent = "Anda belum lulus. Pelajari kembali materi di halaman Stimulus dan Materi.";
+      feedbackBox.className = "feedback-text fail";
+    }
+
+    // Save to Local Storage (only if higher)
+    const currentStored = localStorage.getItem('hidrolisis_score');
+    if (!currentStored || finalScoreVal > parseInt(currentStored)) {
+      localStorage.setItem('hidrolisis_score', finalScoreVal);
+    }
+    
+    // Mark module complete
+    markProgress('evaluasi');
+  }
+
+  function markProgress(key) {
+    try {
+      let p = JSON.parse(localStorage.getItem('hidrolisis_progress'));
+      if(p) {
+        p[key] = true;
+        localStorage.setItem('hidrolisis_progress', JSON.stringify(p));
+      }
+    } catch(e) {}
+  }
+
+})();
+</script>
+
+</body>
+</html>

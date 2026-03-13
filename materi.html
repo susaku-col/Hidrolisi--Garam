@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Materi - Hidrolisis Garam</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="bg-gradient"></div>
+<div class="noise-overlay"></div>
+<canvas id="moleculeCanvas"></canvas>
+
+<header class="header" id="header">
+  <div class="logo">Lab<span>Virtual</span></div>
+  <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu"><span></span><span></span><span></span></button>
+  <nav id="nav">
+    <a href="index.html">Beranda</a>
+    <a href="stimulus.html">Stimulus</a>
+    <a href="materi.html" class="active">Materi</a>
+    <a href="simulasi.html">Simulasi</a>
+    <a href="latihan.html">Latihan</a>
+    <a href="game.html">Game</a>
+    <a href="evaluasi.html">Evaluasi</a>
+  </nav>
+</header>
+
+<main class="container">
+  <section class="materi-hero reveal">
+    <div class="materi-intro">
+      <span class="tag">Materi Pembelajaran</span>
+      <h1>Konsep Hidrolisis Garam</h1>
+      <p>Pelajari teori lengkap tentang hidrolisis garam, jenis-jenisnya, dan cara menghitung pH larutan garam secara matematis.</p>
+    </div>
+  </section>
+
+  <section class="content-section reveal">
+    <div class="card">
+      <div class="section-header"><div class="section-number">1</div><h2 class="section-title">Pengertian Hidrolisis Garam</h2></div>
+      <div class="definition-box"><p><strong>Hidrolisis garam</strong> adalah reaksi pengionan garam oleh air yang menghasilkan ion H<sup>+</sup> atau OH<sup>-</sup>.</p></div>
+      <p style="color: var(--fg-secondary);">Ketika garam dilarutkan dalam air, ion-ion garam dapat bereaksi dengan air atau tidak bereaksi sama sekali.</p>
+      <div class="tips-box"><h5><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>Konsep Dasar</h5><ul><li><strong>Asam kuat:</strong> HCl, HBr, HNO3, H2SO4</li><li><strong>Basa kuat:</strong> NaOH, KOH, Ca(OH)2</li><li><strong>Asam lemah:</strong> CH3COOH, H2CO3</li><li><strong>Basa lemah:</strong> NH3, Al(OH)3</li></ul></div>
+    </div>
+  </section>
+
+  <section class="content-section reveal">
+    <div class="card">
+      <div class="section-header"><div class="section-number">2</div><h2 class="section-title">Jenis-Jenis Hidrolisis</h2></div>
+      <div class="types-grid">
+        <div class="type-card basa"><div class="type-header"><div class="type-icon">Basa</div><div class="type-title">Basa Kuat + Asam Lemah</div></div><div class="type-formula">A- + H2O ⇌ HA + OH-</div><p class="type-desc">Menghasilkan OH- (Basa). Contoh: CH3COONa</p></div>
+        <div class="type-card asam"><div class="type-header"><div class="type-icon">Asam</div><div class="type-title">Basa Lemah + Asam Kuat</div></div><div class="type-formula">B+ + H2O ⇌ BOH + H+</div><p class="type-desc">Menghasilkan H+ (Asam). Contoh: NH4Cl</p></div>
+        <div class="type-card netral"><div class="type-header"><div class="type-icon">Netral</div><div class="type-title">Basa Kuat + Asam Kuat</div></div><div class="type-formula">Tidak terhidrolisis</div><p class="type-desc">pH = 7. Contoh: NaCl</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="nav-buttons reveal">
+    <a href="stimulus.html" class="btn-secondary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Kembali ke Stimulus</a>
+    <a href="simulasi.html" class="btn-primary">Lanjut ke Simulasi<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
+  </section>
+</main>
+
+<footer class="footer">2026 Media Pembelajaran Kimia SMA Kelas XI</footer>
+<script src="assets/js/main.js"></script>
+</body>
+</html>

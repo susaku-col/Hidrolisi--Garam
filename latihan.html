@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Latihan - Hidrolisis Garam</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <!-- PDF.js Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="assets/css/style.css">
+  
+  <style>
+    /* Layout Specific for Latihan Page */
+    .latihan-hero {
+      text-align: center;
+      padding: 2rem 0 1rem;
+    }
+    
+    .latihan-hero p {
+      color: var(--fg-secondary);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* Annotator Wrapper - Full Width Focus */
+    .annotator-section-full {
+      margin: 1rem 0 3rem;
+    }
+
+    .annotator-wrapper-full {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      min-height: 700px;
+      display: grid;
+      grid-template-columns: 70px 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 768px) {
+      .annotator-wrapper-full {
+        grid-template-columns: 1fr;
+        padding: 1rem;
+      }
+    }
+
+    /* Toolbar Styling */
+    .annotator-toolbar {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .tool-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      width: 100%;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 0.5rem;
+    }
+
+    .tool-btn {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+      background: var(--bg-secondary);
+      color: var(--fg-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+
+    .tool-btn:hover {
+      background: var(--accent-dim);
+      color: var(--fg-primary);
+      border-color: var(--border);
+    }
+
+    .tool-btn.active {
+      background: var(--accent);
+      color: var(--bg-primary);
+      border-color: var(--accent);
+      box-shadow: 0 0 10px var(--accent-glow);
+    }
+
+    .tool-btn svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    /* Tooltip */
+    .tool-btn::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      left: 60px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: #111;
+      color: #fff;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+      z-index: 100;
+    }
+    
+    @media (max-width: 768px) {
+      .tool-btn::after {
+        display: none; /* Hide tooltip on mobile */
+      }
+    }
+
+    .tool-btn:hover::after { opacity: 1; }
+
+    .color-picker-wrapper { position: relative; }
+    .color-picker-wrapper input[type="color"] { 
+      position: absolute; opacity: 0; width: 48px; height: 48px; cursor: pointer; 
+    }
+    .color-display {
+      width: 48px; height: 48px; border-radius: var(--radius-sm); 
+      border: 2px solid var(--border); display: flex; align-items: center; 
+      justify-content: center; cursor: pointer; overflow: hidden;
+    }
+    .color-inner { 
+      width: 32px; height: 32px; border-radius: 50%; 
+      border: 2px solid rgba(255,255,255,0.2);
+    }
+    
+    .size-slider { width: 100%; margin-top: 0.5rem; }
+    .size-slider input { width: 100%; accent-color: var(--accent); }
+
+    .action-btn {
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border); 
+      color: var(--fg-secondary); padding: 0.5rem; border-radius: var(--radius-sm); 
+      cursor: pointer; transition: all 0.2s; width: 48px; height: 48px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .action-btn:hover { background: rgba(255,255,255,0.1); color: var(--fg-primary); }
+    .action-btn.danger:hover { background: rgba(239, 68, 68, 0.2); border-color: #f87171; color: #f87171; }
+
+    /* Document Viewer Container */
+    .doc-viewer-container {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      position: relative;
+      overflow: auto;
+      height: 700px;
+      display: flex;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .doc-placeholder {
+      display: flex; flex-direction: column; align-items: center; justify-content: center; 
+      height: 100%; width: 100%; border: 2px dashed var(--border); 
+      border-radius: var(--radius-md); color: var(--fg-secondary); cursor: pointer; 
+      transition: all 0.3s; text-align: center; padding: 2rem;
+    }
+    .doc-placeholder:hover { border-color: var(--accent); background: rgba(0, 229, 176, 0.05); }
+    .doc-placeholder svg { width: 64px; height: 64px; margin-bottom: 1rem; opacity: 0.5; }
+    
+    .file-input { display: none; }
+
+    .pdf-page-container {
+      position: relative; margin-bottom: 20px; 
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3); 
+      display: none;
+    }
+    .pdf-canvas { display: block; }
+    
+    .annotation-canvas {
+      position: absolute; top: 0; left: 0; z-index: 10; cursor: crosshair;
+    }
+    .annotation-canvas.eraser-cursor { 
+      cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="12" cy="12" r="8" fill="black"/></svg>') 12 12, auto; 
+    }
+
+  </style>
+</head>
+<body>
+
+<!-- Background Layers -->
+<div class="bg-grid"></div>
+<div class="bg-gradient"></div>
+<div class="noise-overlay"></div>
+<canvas id="moleculeCanvas"></canvas>
+
+<!-- Header -->
+<header class="header" id="header">
+  <div class="logo">Lab<span>Virtual</span></div>
+  <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+    <span></span><span></span><span></span>
+  </button>
+  <nav id="nav">
+    <a href="index.html">Beranda</a>
+    <a href="stimulus.html">Stimulus</a>
+    <a href="materi.html">Materi</a>
+    <a href="simulasi.html">Simulasi</a>
+    <a href="latihan.html" class="active">Latihan</a>
+    <a href="game.html">Game</a>
+    <a href="evaluasi.html">Evaluasi</a>
+  </nav>
+</header>
+
+<main class="container">
+
+  <!-- Hero -->
+  <section class="latihan-hero reveal">
+    <span class="tag">Buku Kerja Digital</span>
+    <h1>Latihan Mandiri</h1>
+    <p>Unggah lembar kerja (PDF) dan kerjakan soal-soalnya secara digital. Gunakan alat tulis di sebelah kiri untuk menulis atau menandai jawaban.</p>
+  </section>
+
+  <!-- Document Annotator Only -->
+  <section class="annotator-section-full reveal">
+    <div class="annotator-wrapper-full">
+      
+      <!-- Toolbar -->
+      <div class="annotator-toolbar">
+        <div class="tool-group" style="border-bottom: none; margin-bottom: 0;">
+          <label for="fileUpload" class="tool-btn" data-tooltip="Unggah PDF" style="background: var(--accent); color: white;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </label>
+          <input type="file" id="fileUpload" class="file-input" accept=".pdf">
+        </div>
+
+        <div class="tool-group">
+          <button class="tool-btn active" data-tool="ballpoint" data-tooltip="Pulpen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>
+          <button class="tool-btn" data-tool="pen" data-tooltip="Pena"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg></button>
+          <button class="tool-btn" data-tool="marker" data-tooltip="Spidol"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20h4l10.5 -10.5a1.5 1.5 0 0 0 -3 -3l-10.5 10.5v4"/><path d="M13.5 6.5l3 3"/></svg></button>
+          <button class="tool-btn" data-tool="highlighter" data-tooltip="Stabilo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l-6 6v3h9l3-3"/><path d="M22 12l-4.6 4.6a2 2 0 0 1 -2.8 0l-5.2 -5.2a2 2 0 0 1 0 -2.8l4.6 -4.6"/></svg></button>
+        </div>
+
+        <div class="tool-group">
+           <button class="tool-btn" data-tool="eraser" data-tooltip="Penghapus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 21h10"/><path d="M5.5 11.5l6.5 -6.5a2.12 2.12 0 0 1 3 3l-6.5 6.5a2.12 2.12 0 0 1 -3 -3z"/><path d="M12.5 5.5l3 3"/></svg></button>
+        </div>
+
+        <div class="tool-group">
+          <div class="color-picker-wrapper">
+            <input type="color" id="colorPicker" value="#000000"> <!-- Default Black for worksheets -->
+            <div class="color-display" data-tooltip="Warna"><div class="color-inner" id="colorInner" style="background: #000000;"></div></div>
+          </div>
+          <div class="size-slider"><input type="range" min="1" max="50" value="3" id="brushSize"></div>
+        </div>
+
+        <div class="tool-group" style="border-bottom: none;">
+          <button class="action-btn danger" id="clearAll" data-tooltip="Hapus Semua"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+        </div>
+      </div>
+
+      <!-- Viewer -->
+      <div class="doc-viewer-container" id="docViewer">
+        <div class="doc-placeholder" id="placeholder">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          <p>Klik untuk Unggah File PDF</p>
+          <span style="font-size: 0.8rem; opacity: 0.7; margin-top: 0.5rem;">Format: .pdf (Disarankan dari scan soal latihan)</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Navigation -->
+  <section class="nav-buttons reveal">
+    <a href="simulasi.html" class="btn-secondary">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Kembali ke Simulasi
+    </a>
+    <a href="game.html" class="btn-primary">
+      Lanjut ke Game
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </a>
+  </section>
+
+</main>
+
+<footer class="footer">2026 Media Pembelajaran Kimia SMA Kelas XI</footer>
+
+<script src="assets/js/main.js"></script>
+
+<script>
+(function() {
+  'use strict';
+
+  // ==========================================
+  // DOCUMENT ANNOTATOR LOGIC
+  // ==========================================
+
+  const fileInput = document.getElementById('fileUpload');
+  const docViewer = document.getElementById('docViewer');
+  const placeholder = document.getElementById('placeholder');
+  const toolButtons = document.querySelectorAll('.tool-btn[data-tool]');
+  const colorPicker = document.getElementById('colorPicker');
+  const colorInner = document.getElementById('colorInner');
+  const brushSizeInput = document.getElementById('brushSize');
+  const clearAllBtn = document.getElementById('clearAll');
+
+  let currentTool = 'ballpoint';
+  let currentColor = '#000000'; // Default black for writing
+  let currentSize = 3;
+  let isDrawing = false;
+  let currentPath = [];
+  let strokes = []; 
+  let pdfDoc = null;
+  let pageCanvases = []; 
+
+  // Configure PDF.js worker
+  if (typeof pdfjsLib !== 'undefined') {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  }
+
+  // --- Tool Selection ---
+  toolButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      toolButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentTool = btn.dataset.tool;
+      // Change cursor for eraser
+      pageCanvases.forEach(p => { if(p.ann) p.ann.classList.toggle('eraser-cursor', currentTool === 'eraser'); });
+    });
+  });
+
+  // --- Color & Size ---
+  colorPicker.addEventListener('input', (e) => { currentColor = e.target.value; colorInner.style.background = currentColor; });
+  colorInner.addEventListener('click', () => colorPicker.click());
+  brushSizeInput.addEventListener('input', (e) => { currentSize = parseInt(e.target.value); });
+
+  // --- File Upload ---
+  placeholder.addEventListener('click', () => fileInput.click());
+  
+  fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file && file.type === 'application/pdf') loadPDF(file);
+    else if(file) alert('Mohon unggah file dalam format PDF.');
+  });
+
+  // --- PDF Rendering ---
+  async function loadPDF(file) {
+    const arrayBuffer = await file.arrayBuffer();
+    try {
+      pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const totalPages = pdfDoc.numPages;
+      docViewer.innerHTML = ''; 
+      pageCanvases = [];
+      strokes = [];
+      for (let i = 1; i <= totalPages; i++) await renderPage(i);
+    } catch (error) { console.error(error); alert('Gagal memuat PDF.'); }
+  }
+
+  async function renderPage(pageNum) {
+    const page = await pdfDoc.getPage(pageNum);
+    const scale = 1.5; // Zoom level
+    const viewport = page.getViewport({ scale });
+    const pageContainer = document.createElement('div');
+    pageContainer.className = 'pdf-page-container';
+    pageContainer.style.display = 'block';
+    
+    // PDF Layer
+    const pdfCanvas = document.createElement('canvas');
+    pdfCanvas.className = 'pdf-canvas';
+    pdfCanvas.width = viewport.width;
+    pdfCanvas.height = viewport.height;
+    const pdfCtx = pdfCanvas.getContext('2d');
+
+    // Annotation Layer
+    const annCanvas = document.createElement('canvas');
+    annCanvas.className = 'annotation-canvas';
+    if(currentTool === 'eraser') annCanvas.classList.add('eraser-cursor');
+    annCanvas.width = viewport.width;
+    annCanvas.height = viewport.height;
+    const annCtx = annCanvas.getContext('2d');
+
+    pageContainer.appendChild(pdfCanvas);
+    pageContainer.appendChild(annCanvas);
+    docViewer.appendChild(pageContainer);
+
+    pageCanvases.push({ pdf: pdfCanvas, pdfCtx: pdfCtx, ann: annCanvas, annCtx: annCtx, container: pageContainer, pageNum: pageNum });
+    
+    await page.render({ canvasContext: pdfCtx, viewport: viewport }).promise;
+    setupCanvasEvents(annCanvas, pageNum - 1);
+  }
+
+  // --- Drawing Events Setup ---
+  function setupCanvasEvents(canvas, pageIdx) {
+    canvas.addEventListener('mousedown', (e) => startDraw(e, pageIdx));
+    canvas.addEventListener('mousemove', (e) => draw(e, pageIdx));
+    canvas.addEventListener('mouseup', () => endDraw());
+    canvas.addEventListener('mouseleave', () => endDraw());
+
+    // Touch Support
+    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); const touch = e.touches[0]; const mouseEvent = new MouseEvent('mousedown', { clientX: touch.clientX, clientY: touch.clientY }); canvas.dispatchEvent(mouseEvent); });
+    canvas.addEventListener('touchmove', (e) => { e.preventDefault(); const touch = e.touches[0]; const mouseEvent = new MouseEvent('mousemove', { clientX: touch.clientX, clientY: touch.clientY }); canvas.dispatchEvent(mouseEvent); });
+    canvas.addEventListener('touchend', () => { const mouseEvent = new MouseEvent('mouseup', {}); canvas.dispatchEvent(mouseEvent); });
+  }
+
+  function getCoords(e, canvas) { const rect = canvas.getBoundingClientRect(); return { x: e.clientX - rect.left, y: e.clientY - rect.top }; }
+  function getDistance(p1, p2) { return Math.hypot(p2.x - p1.x, p2.y - p1.y); }
+
+  // --- SMOOTH DRAWING LOGIC ---
+
+  function startDraw(e, pageIdx) {
+    isDrawing = true;
+    const coords = getCoords(e, pageCanvases[pageIdx].ann);
+    
+    if (currentTool === 'eraser') {
+      eraseStroke(coords, pageIdx);
+      return;
+    }
+
+    const point = { x: coords.x, y: coords.y, pageIdx: pageIdx };
+    currentPath = [point];
+    
+    const ctx = pageCanvases[pageIdx].annCtx;
+    ctx.beginPath();
+    ctx.moveTo(coords.x, coords.y);
+    setupContext(ctx);
+  }
+
+  function draw(e, pageIdx) {
+    if (!isDrawing) return;
+    const coords = getCoords(e, pageCanvases[pageIdx].ann);
+
+    if (currentTool === 'eraser') {
+      eraseStroke(coords, pageIdx);
+      return;
+    }
+
+    const lastPoint = currentPath[currentPath.length - 1];
+    const distance = getDistance(lastPoint, coords);
+    
+    // Noise Filter
+    if (distance < 2 && currentPath.length > 1) return;
+
+    const point = { x: coords.x, y: coords.y, pageIdx: pageIdx };
+    currentPath.push(point);
+
+    const ctx = pageCanvases[pageIdx].annCtx;
+    
+    // Smoothing Algorithm
+    if (currentPath.length > 1) {
+      const p1 = currentPath[currentPath.length - 2];
+      const p2 = currentPath[currentPath.length - 1];
+      const midX = (p1.x + p2.x) / 2;
+      const midY = (p1.y + p2.y) / 2;
+
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.quadraticCurveTo(p1.x, p1.y, midX, midY);
+      ctx.stroke();
+    }
+  }
+
+  function endDraw() {
+    if (isDrawing && currentTool !== 'eraser' && currentPath.length > 0) {
+      strokes.push({
+        tool: currentTool,
+        color: currentColor,
+        size: currentSize,
+        points: [...currentPath],
+        pageIdx: currentPath[0].pageIdx
+      });
+    }
+    isDrawing = false;
+    currentPath = [];
+  }
+
+  // --- Helper to setup Context ---
+  function setupContext(ctx) {
+    ctx.lineWidth = getSizeByTool();
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = currentColor;
+
+    if (currentTool === 'highlighter') {
+      ctx.globalAlpha = 0.3;
+      ctx.globalCompositeOperation = 'multiply';
+    } else {
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = 'source-over';
+    }
+  }
+
+  // --- Eraser Logic ---
+  function eraseStroke(coords, pageIdx) {
+    const pageData = pageCanvases[pageIdx];
+    if(!pageData) return;
+
+    let changed = false;
+    const remainingStrokes = strokes.filter(stroke => {
+      if (stroke.pageIdx !== pageIdx) return true;
+      
+      for (let p of stroke.points) {
+        if (Math.hypot(p.x - coords.x, p.y - coords.y) < 15) { 
+          changed = true;
+          return false; 
+        }
+      }
+      return true;
+    });
+
+    if (changed) {
+      strokes = remainingStrokes;
+      redrawCanvas(pageIdx);
+    }
+  }
+
+  function redrawCanvas(pageIdx) {
+    const pageData = pageCanvases[pageIdx];
+    if(!pageData) return;
+
+    const ctx = pageData.annCtx;
+    const canvas = pageData.ann;
+    
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    strokes.forEach(stroke => {
+      if(stroke.pageIdx === pageIdx) {
+        drawStroke(ctx, stroke);
+      }
+    });
+  }
+
+  // --- SMOOTH REDRAW LOGIC ---
+  function drawStroke(ctx, stroke) {
+    if(stroke.points.length < 2) return;
+
+    ctx.lineWidth = stroke.size;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = stroke.color;
+
+    if (stroke.tool === 'highlighter') {
+      ctx.globalAlpha = 0.3;
+      ctx.globalCompositeOperation = 'multiply';
+    } else {
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = 'source-over';
+    }
+
+    ctx.beginPath();
+    ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
+
+    for (let i = 1; i < stroke.points.length - 1; i++) {
+        const p0 = stroke.points[i];
+        const p1 = stroke.points[i + 1];
+        const midX = (p0.x + p1.x) / 2;
+        const midY = (p0.y + p1.y) / 2;
+        ctx.quadraticCurveTo(p0.x, p0.y, midX, midY);
+    }
+    
+    const last = stroke.points[stroke.points.length - 1];
+    ctx.lineTo(last.x, last.y);
+    
+    ctx.stroke();
+    
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+  function getSizeByTool() {
+    let baseSize = parseInt(brushSizeInput.value);
+    if (currentTool === 'ballpoint') return Math.max(1, baseSize * 0.5);
+    if (currentTool === 'pen') return Math.max(1, baseSize);
+    if (currentTool === 'marker') return Math.max(5, baseSize * 2);
+    if (currentTool === 'highlighter') return Math.max(15, baseSize * 5);
+    return baseSize;
+  }
+
+  clearAllBtn.addEventListener('click', () => { 
+    if(confirm('Hapus semua anotasi di semua halaman?')) { 
+      strokes = []; 
+      pageCanvases.forEach((p) => p.annCtx.clearRect(0, 0, p.ann.width, p.ann.height)); 
+    }
+  });
+
+})();
+</script>
+
+</body>
+</html>

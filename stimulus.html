@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stimulus - Hidrolisis Garam</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="assets/css/style.css">
+  
+  <style>
+    /* Stimulus Page Specific Styles */
+    .stimulus-hero { text-align: center; padding: 2rem 0; }
+    .stimulus-intro p { font-size: 1.2rem; max-width: 800px; margin: 0 auto; }
+    .real-world-section { margin: 3rem 0; }
+    .real-world-section h2 { text-align: center; margin-bottom: 0.5rem; }
+    .subtitle { text-align: center; color: var(--fg-secondary); margin-bottom: 2rem; }
+    .real-world-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
+
+    /* Card Style */
+    .rw-card { background: var(--glass); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; transition: all 0.3s; }
+    .rw-card:hover { transform: translateY(-4px); border-color: var(--accent); }
+
+    /* Image Container */
+    .rw-image-container { position: relative; height: 220px; overflow: hidden; background-color: var(--bg-secondary); }
+    .rw-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
+    .rw-card:hover .rw-img { transform: scale(1.05); }
+
+    /* Overlay Gradient */
+    .rw-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(5, 8, 13, 0.8), transparent 60%); display: flex; align-items: flex-end; justify-content: center; padding-bottom: 1rem; opacity: 0; transition: opacity 0.3s; }
+    .rw-card:hover .rw-overlay { opacity: 1; }
+    .rw-icon { font-size: 2.5rem; filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.5)); }
+
+    /* Content Area */
+    .rw-content { padding: 1.5rem; position: relative; }
+    .rw-content h4 { font-family: var(--font-display); font-size: 1.2rem; margin-bottom: 0.5rem; color: var(--fg-primary); }
+    .rw-content p { font-size: 0.95rem; color: var(--fg-secondary); line-height: 1.5; margin-bottom: 1rem; }
+
+    /* Tags */
+    .rw-tag { display: inline-block; padding: 0.35rem 0.9rem; border-radius: 100px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; font-family: var(--font-display); letter-spacing: 0.03em; }
+    .rw-tag.basa { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+    .rw-tag.asam { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .rw-tag.netral { background: rgba(156, 163, 175, 0.15); color: #d1d5db; border: 1px solid rgba(156, 163, 175, 0.3); }
+
+    /* Experiment Box */
+    .experiment-box { background: rgba(0, 0, 0, 0.2); border-radius: var(--radius); padding: 1.5rem; margin-top: 2rem; border: 1px solid var(--border); }
+    .exp-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .exp-tab { background: transparent; border: 1px solid var(--border); color: var(--fg-secondary); padding: 0.75rem 1.25rem; border-radius: 8px; font-family: var(--font-display); font-weight: 500; cursor: pointer; transition: all 0.2s; }
+    .exp-tab:hover { border-color: var(--accent); color: var(--fg-primary); }
+    .exp-tab.active { background: var(--accent); color: var(--bg-primary); border-color: var(--accent); }
+
+    .exp-content { display: grid; grid-template-columns: 1fr 1.5fr; gap: 2rem; align-items: start; }
+    .exp-visual { display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+
+    .beaker { position: relative; width: 140px; height: 200px; background: rgba(255, 255, 255, 0.03); border: 3px solid rgba(255, 255, 255, 0.15); border-top: none; border-radius: 0 0 24px 24px; overflow: hidden; box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.3); }
+    .liquid { position: absolute; bottom: 0; left: 0; width: 100%; height: 60%; transition: height 0.8s ease, background 0.5s ease; background: linear-gradient(to top, rgba(156, 163, 175, 0.5), rgba(212, 212, 212, 0.3)); }
+    .liquid.base { background: linear-gradient(to top, rgba(59, 130, 246, 0.6), rgba(96, 165, 250, 0.3)); }
+    .liquid.acid { background: linear-gradient(to top, rgba(239, 68, 68, 0.6), rgba(248, 113, 113, 0.3)); }
+    .liquid.neutral { background: linear-gradient(to top, rgba(156, 163, 175, 0.5), rgba(212, 212, 212, 0.3)); }
+
+    #reactionCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
+
+    .indicator-paper { padding: 0.5rem 1rem; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border); border-radius: 8px; font-family: var(--font-display); font-weight: 600; transition: background 0.5s ease, border-color 0.5s ease; }
+    .indicator-paper.base { background: rgba(59, 130, 246, 0.2); border-color: rgba(59, 130, 246, 0.4); }
+    .indicator-paper.acid { background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.4); }
+    .indicator-paper.neutral { background: rgba(156, 163, 175, 0.2); border-color: rgba(156, 163, 175, 0.4); }
+
+    .exp-desc h4 { color: var(--accent); margin-bottom: 1rem; }
+    .reaction-equation { background: rgba(0, 0, 0, 0.3); border-left: 4px solid var(--accent); padding: 1rem; margin: 1rem 0; border-radius: 0 8px 8px 0; }
+    .reaction-equation code { display: block; margin-top: 0.5rem; font-family: 'Courier New', monospace; color: var(--accent); background: var(--accent-dim); padding: 0.5rem; border-radius: 6px; }
+
+    .video-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: var(--radius); margin-top: 1.5rem; background: var(--bg-secondary); }
+    .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+
+    @media (max-width: 768px) { .exp-content { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+<!-- Background Layers -->
+<div class="bg-grid"></div>
+<div class="bg-gradient"></div>
+<div class="noise-overlay"></div>
+<canvas id="moleculeCanvas"></canvas>
+
+<!-- Header -->
+<header class="header" id="header">
+  <div class="logo">Lab<span>Virtual</span></div>
+  <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+    <span></span><span></span><span></span>
+  </button>
+  <nav id="nav">
+    <a href="index.html">Beranda</a>
+    <a href="stimulus.html" class="active">Stimulus</a>
+    <a href="materi.html">Materi</a>
+    <a href="simulasi.html">Simulasi</a>
+    <a href="latihan.html">Latihan</a>
+    <a href="game.html">Game</a>
+    <a href="evaluasi.html">Evaluasi</a>
+  </nav>
+</header>
+
+<main class="container">
+
+  <!-- Hero -->
+  <section class="stimulus-hero reveal">
+    <div class="stimulus-intro">
+      <span class="tag">Stimulus</span>
+      <h1>Misteri di Balik Air Sabun dan Pupuk</h1>
+      <p>Pernahkah Anda bertanya mengapa sabun terasa licin saat dicampur air? Atau mengapa tanah bisa menjadi asam setelah dipupuk? Ternyata, garam yang tampak netral tidak selalu menghasilkan larutan netral.</p>
+    </div>
+  </section>
+
+  <!-- Real World Section -->
+  <section class="real-world-section reveal">
+    <h2>Observasi Kehidupan Nyata</h2>
+    <p class="subtitle">Perhatikan benda-benda ini. Apa yang terjadi jika kita melarutkannya dalam air?</p>
+    
+    <div class="real-world-grid">
+      <!-- Sabun -->
+      <div class="rw-card">
+        <div class="rw-image-container">
+          <img src="assets/images/sabun.jpg" alt="Sabun Mandi" class="rw-img">
+          <div class="rw-overlay"><span class="rw-icon">🧼</span></div>
+        </div>
+        <div class="rw-content">
+          <h4>Sabun Mandi</h4>
+          <p>Natrium stearat (Garam basa kuat - asam lemah).</p>
+          <div class="rw-tag basa">Basa</div>
+        </div>
+      </div>
+
+      <!-- Pupuk -->
+      <div class="rw-card">
+        <div class="rw-image-container">
+          <img src="assets/images/pupukZA.jpg" alt="Pupuk ZA" class="rw-img">
+          <div class="rw-overlay"><span class="rw-icon">🌱</span></div>
+        </div>
+        <div class="rw-content">
+          <h4>Pupuk ZA</h4>
+          <p>Amonium sulfat (Garam basa lemah - asam kuat).</p>
+          <div class="rw-tag asam">Asam</div>
+        </div>
+      </div>
+
+      <!-- Garam -->
+      <div class="rw-card">
+        <div class="rw-image-container">
+          <img src="assets/images/garamdapur.jpg" alt="Garam Dapur" class="rw-img">
+          <div class="rw-overlay"><span class="rw-icon">🧂</span></div>
+        </div>
+        <div class="rw-content">
+          <h4>Garam Dapur</h4>
+          <p>NaCl (Garam basa kuat - asam kuat).</p>
+          <div class="rw-tag netral">Netral</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Experiment Section -->
+  <section class="card-section">
+    <div class="card reveal">
+      <h3>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M10 2v7.31"/><path d="M14 9.3V1.99"/><path d="M8.5 2h7"/>
+          <path d="M14 9.3a6.5 6.5 0 1 1-4 0"/><path d="M5.52 16h12.96"/>
+        </svg>
+        Simulasi Mikroskopik: Reaksi Ion dalam Air
+      </h3>
+      <p style="margin-bottom: 1.5rem; color: var(--fg-secondary);">Klik tab untuk mengganti jenis garam, perhatikan ion mana yang bereaksi dengan air.</p>
+      
+      <div class="experiment-box">
+        <div class="exp-tabs">
+          <button class="exp-tab active" data-tab="soap">Sabun (Basa)</button>
+          <button class="exp-tab" data-tab="fertilizer">Pupuk (Asam)</button>
+          <button class="exp-tab" data-tab="salt">Garam (Netral)</button>
+        </div>
+        
+        <div class="exp-content">
+          <div class="exp-visual">
+            <div class="beaker" id="beaker">
+              <div class="liquid" id="liquid"></div>
+              <canvas id="reactionCanvas"></canvas>
+            </div>
+            <div class="indicator-paper" id="indicatorPaper">
+              <span>pH: <strong id="phValue">7</strong></span>
+            </div>
+          </div>
+          
+          <div class="exp-desc" id="expDesc">
+            <h4>Sabun Mandi (Basa)</h4>
+            <div class="reaction-equation">
+              <p><strong>Reaksi:</strong></p>
+              <code>A<sup>-</sup> + H<sub>2</sub>O ⇌ HA + OH<sup>-</sup></code>
+            </div>
+            <p style="color: var(--fg-secondary); margin-top: 1rem;">Ion <strong style="color:#f97316">A<sup>-</sup> (Anion)</strong> dari sabun menarik H<sup>+</sup> dari air, menghasilkan <strong style="color:#3b82f6">OH<sup>-</sup></strong> yang membuat larutan bersifat basa (licin).</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Video Section -->
+  <section class="card-section">
+    <div class="card reveal">
+      <h3>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="5 3 19 12 5 21 5 3"/>
+        </svg>
+        Video Pembelajaran
+      </h3>
+      <div class="video-container">
+        <!-- VIDEO LINK FIXED -->
+        <iframe 
+          src="https://www.youtube.com/embed/s7RqGm1jGyg" 
+          title="Video Hidrolisis Garam" 
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+          allowfullscreen>
+        </iframe>
+      </div>
+    </div>
+  </section>
+
+  <!-- Navigation -->
+  <section class="nav-buttons reveal">
+    <a href="index.html" class="btn-secondary">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Beranda
+    </a>
+    <a href="materi.html" class="btn-primary">
+      Lanjut ke Materi
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </a>
+  </section>
+
+</main>
+
+<footer class="footer">
+  2026 Media Pembelajaran Kimia SMA Kelas XI - Hidrolisis Garam
+</footer>
+
+<!-- JavaScript -->
+<script src="assets/js/main.js"></script>
+
+<script>
+(function() {
+  'use strict';
+
+  // Simulasi Ion (Canvas)
+  var canvas = document.getElementById('reactionCanvas');
+  var ctx = canvas.getContext('2d');
+  var liquid = document.getElementById('liquid');
+  var phValue = document.getElementById('phValue');
+  var expDesc = document.getElementById('expDesc');
+  var indicatorPaper = document.getElementById('indicatorPaper');
+  var beaker = document.getElementById('beaker');
+  var tabs = document.querySelectorAll('.exp-tab');
+
+  var particles = [];
+  var currentType = 'soap';
+  var animationId = null;
+
+  var config = {
+    soap: {
+      ph: '9-10',
+      liquidClass: 'base',
+      indicatorClass: 'base',
+      title: 'Sabun Mandi (Basa)',
+      equation: 'A<sup>-</sup> + H<sub>2</sub>O ⇌ HA + OH<sup>-</sup>',
+      desc: 'Ion <strong style="color:#f97316">A<sup>-</sup> (Anion)</strong> dari sabun menarik H<sup>+</sup> dari air, menghasilkan <strong style="color:#3b82f6">OH<sup>-</sup></strong> yang membuat larutan bersifat basa (licin).',
+      reactionType: 'anion'
+    },
+    fertilizer: {
+      ph: '4-5',
+      liquidClass: 'acid',
+      indicatorClass: 'acid',
+      title: 'Pupuk ZA (Asam)',
+      equation: 'B<sup>+</sup> + H<sub>2</sub>O ⇌ BOH + H<sup>+</sup>',
+      desc: 'Ion <strong style="color:#eab308">B<sup>+</sup> (Kation)</strong> dari pupuk menarik OH<sup>-</sup> dari air, menghasilkan <strong style="color:#ef4444">H<sup>+</sup></strong> yang membuat larutan bersifat asam.',
+      reactionType: 'cation'
+    },
+    salt: {
+      ph: '7',
+      liquidClass: 'neutral',
+      indicatorClass: 'neutral',
+      title: 'Garam Dapur (Netral)',
+      equation: 'Tidak ada reaksi hidrolisis',
+      desc: 'Ion Na<sup>+</sup> dan Cl<sup>-</sup> berasal dari basa kuat dan asam kuat. Keduanya tidak bereaksi dengan air, larutan tetap netral.',
+      reactionType: 'none'
+    }
+  };
+
+  function resizeCanvas() {
+    canvas.width = beaker.offsetWidth;
+    canvas.height = beaker.offsetHeight;
+  }
+
+  function Particle(type) {
+    this.type = type;
+    this.x = Math.random() * canvas.width;
+    this.y = canvas.height - 10;
+    this.vx = (Math.random() - 0.5) * 2;
+    this.vy = -Math.random() * 1.5 - 0.5;
+    this.radius = type === 'water' ? 4 : 12;
+    this.life = 1;
+
+    var colors = {
+      water: 'rgba(150, 200, 255, 0.4)',
+      cation: '#eab308',
+      anion: '#f97316',
+      H: '#ef4444',
+      OH: '#3b82f6'
+    };
+    this.color = colors[type] || '#ffffff';
+  }
+
+  Particle.prototype.update = function() {
+    this.x += this.vx;
+    this.y += this.vy;
+    this.vx *= 0.99;
+    this.vy *= 0.99;
+
+    if (this.x < this.radius) { this.x = this.radius; this.vx *= -0.8; }
+    if (this.x > canvas.width - this.radius) { this.x = canvas.width - this.radius; this.vx *= -0.8; }
+    if (this.vy > -0.3) this.vy -= 0.01;
+
+    if (this.y < -this.radius) {
+      this.y = canvas.height - 10;
+      this.x = Math.random() * canvas.width;
+      this.vx = (Math.random() - 0.5) * 2;
+      this.vy = -Math.random() * 1.5 - 0.5;
+      if (this.type === 'H' || this.type === 'OH') return false;
+    }
+    return true;
+  };
+
+  Particle.prototype.draw = function() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, Math.max(1, this.radius), 0, Math.PI * 2);
+    ctx.fillStyle = this.color;
+    ctx.fill();
+
+    if (this.type !== 'water') {
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 10px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      var label = this.type === 'cation' ? '+' : (this.type === 'anion' ? '-' : this.type);
+      ctx.fillText(label, this.x, this.y);
+    }
+  };
+
+  function spawnParticles() {
+    if (particles.length < 25) {
+      if (Math.random() > 0.6) particles.push(new Particle('water'));
+      
+      if (currentType !== 'salt') {
+        if (Math.random() > 0.9) particles.push(new Particle('cation'));
+        if (Math.random() > 0.9) particles.push(new Particle('anion'));
+      } else {
+        if (Math.random() > 0.88) particles.push(new Particle('cation'));
+        if (Math.random() > 0.88) particles.push(new Particle('anion'));
+      }
+    }
+  }
+
+  function checkReactions() {
+    if (currentType === 'salt') return;
+
+    for (var i = 0; i < particles.length; i++) {
+      var p = particles[i];
+      if ((p.type === 'anion' || p.type === 'cation') && Math.random() > 0.97) {
+        var waters = particles.filter(function(w) { return w.type === 'water'; });
+        if (waters.length > 0) {
+          var target = waters[Math.floor(Math.random() * waters.length)];
+          var dist = Math.hypot(p.x - target.x, p.y - target.y);
+          if (dist < 60) {
+            var idx = particles.indexOf(target);
+            if (idx > -1) particles.splice(idx, 1);
+
+            if (currentType === 'soap' && p.type === 'anion') {
+              var oh = new Particle('OH');
+              oh.x = target.x; oh.y = target.y;
+              particles.push(oh);
+            } else if (currentType === 'fertilizer' && p.type === 'cation') {
+              var h = new Particle('H');
+              h.x = target.x; h.y = target.y;
+              particles.push(h);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    spawnParticles();
+    checkReactions();
+
+    for (var i = particles.length - 1; i >= 0; i--) {
+      if (!particles[i].update()) {
+        particles.splice(i, 1);
+      } else {
+        particles[i].draw();
+      }
+    }
+    animationId = requestAnimationFrame(animate);
+  }
+
+  function updateUI(type) {
+    var cfg = config[type];
+    
+    liquid.style.height = '0%';
+    indicatorPaper.className = 'indicator-paper';
+
+    setTimeout(function() {
+      liquid.className = 'liquid ' + cfg.liquidClass;
+      liquid.style.height = '60%';
+      phValue.textContent = cfg.ph;
+      indicatorPaper.classList.add(cfg.indicatorClass);
+
+      expDesc.innerHTML = 
+        '<h4>' + cfg.title + '</h4>' +
+        '<div class="reaction-equation">' +
+          '<p><strong>Reaksi:</strong></p>' +
+          '<code>' + cfg.equation + '</code>' +
+        '</div>' +
+        '<p style="color:var(--fg-secondary);margin-top:1rem;">' + cfg.desc + '</p>';
+    }, 100);
+  }
+
+  tabs.forEach(function(tab) {
+    tab.addEventListener('click', function() {
+      tabs.forEach(function(t) { t.classList.remove('active'); });
+      this.classList.add('active');
+
+      particles = [];
+      currentType = this.dataset.tab;
+      updateUI(currentType);
+      resizeCanvas();
+    });
+  });
+
+  window.addEventListener('load', function() {
+    resizeCanvas();
+    updateUI('soap');
+    
+    var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!prefersReducedMotion) {
+      animate();
+    }
+  });
+
+  window.addEventListener('resize', resizeCanvas);
+
+})();
+</script>
+
+</body>
+</html>
